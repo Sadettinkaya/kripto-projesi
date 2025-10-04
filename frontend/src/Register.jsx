@@ -17,18 +17,19 @@ export default function Register() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
       });
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        setError("Sunucu JSON cevabı alınamadı");
-        return;
-      }
       if (res.ok) {
-        setSuccess(typeof data === "string" ? data : "Kayıt başarılı! Giriş yapabilirsiniz.");
+        // Backend'den string response geliyor, JSON parse etmeye gerek yok
+        const responseText = await res.text();
+        setSuccess(responseText || "Kayıt başarılı! Giriş yapabilirsiniz.");
       } else {
-        setError(typeof data === "string" ? data : (data.message || "Kayıt başarısız"));
-        console.error("Register response:", res.status, data);
+        // Hata durumunda JSON parse etmeyi dene
+        try {
+          const data = await res.json();
+          setError(typeof data === "string" ? data : (data.message || "Kayıt başarısız"));
+        } catch {
+          setError("Kayıt başarısız");
+        }
+        console.error("Register response:", res.status);
       }
     } catch (err) {
       setError("Network hatası: " + err.message);
