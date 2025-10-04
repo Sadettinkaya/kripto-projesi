@@ -2,6 +2,7 @@ import React from "react";
 import CryptoPrices from "./CryptoPrices";
 import Login from "./Login";
 import Register from "./Register";
+import { AuthProvider, useAuth } from "./AuthContext";
 
 function getPage() {
   const path = window.location.pathname;
@@ -10,14 +11,27 @@ function getPage() {
   return "home";
 }
 
-function App() {
+function AppContent() {
   const page = getPage();
+  const { user, logout } = useAuth();
+
   return (
     <div className="d-flex flex-column justify-content-center align-items-center min-vh-100" style={{ background: '#f8f9fa' }}>
       <nav className="mb-4 text-center">
         <a className="btn btn-link text-primary" href="/">Ana Sayfa</a>
-        <a className="btn btn-link text-primary" href="/login">Giriş Yap</a>
-        <a className="btn btn-link text-primary" href="/register">Kayıt Ol</a>
+        {user ? (
+          <>
+            <span className="text-muted me-3">Hoş geldiniz!</span>
+            <button className="btn btn-outline-danger btn-sm" onClick={logout}>
+              Çıkış Yap
+            </button>
+          </>
+        ) : (
+          <>
+            <a className="btn btn-link text-primary" href="/login">Giriş Yap</a>
+            <a className="btn btn-link text-primary" href="/register">Kayıt Ol</a>
+          </>
+        )}
       </nav>
       <div className="w-100 d-flex justify-content-center">
         <div style={{ minWidth: 320, maxWidth: 350, width: '100%' }}>
@@ -27,6 +41,14 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

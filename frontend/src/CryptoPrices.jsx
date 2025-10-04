@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import useCryptoPrices from "./useCryptoPrices";
 import CoinDetailModal from "./CoinDetailModal";
-
-function isLoggedIn() {
-  return Boolean(localStorage.getItem("token"));
-}
+import { useAuth } from "./AuthContext";
 
 export default function CryptoPrices() {
   const prices = useCryptoPrices();
   const [selectedSymbol, setSelectedSymbol] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const { user } = useAuth();
 
   // Sadece ilk 5 sembolü göster
   const priceEntries = Object.entries(prices).slice(0, 5);
@@ -55,7 +53,7 @@ export default function CryptoPrices() {
         <CoinDetailModal
           symbol={selectedSymbol}
           details={getDetails(selectedSymbol)}
-          isLoggedIn={isLoggedIn()}
+          isLoggedIn={!!user}
           onClose={handleCloseModal}
           onLoginRedirect={handleLoginRedirect}
         />

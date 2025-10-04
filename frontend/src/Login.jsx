@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useAuth } from "./AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function Login() {
         return;
       }
       if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
+        login(data.token);
         window.location.href = "/";
       } else {
         setError(typeof data === "string" ? data : (data.message || "Giriş başarısız"));
