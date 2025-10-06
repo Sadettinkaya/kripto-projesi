@@ -20,6 +20,10 @@ RUN dotnet publish "Kripto.Api.csproj" -c Release -o /app/publish /p:UseAppHost=
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy published app
 COPY --from=publish /app/publish .
 
@@ -32,7 +36,7 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD nc -z localhost 5126 || exit 1
+    CMD curl -fsS http://localhost:5126/health || exit 1
 
 # Start the application
 ENTRYPOINT ["dotnet", "Kripto.Api.dll"]
