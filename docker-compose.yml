@@ -1,0 +1,77 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: kripto_postgres
+    environment:
+      POSTGRES_DB: kripto_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 48
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - kripto_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kripto_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET Core API Backend
+  backend:
+    build:
+      context: ./Kripto.Api
+      dockerfile: Dockerfile
+    container_name: kripto_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5126
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=kripto_db;Username=postgres;Password=48
+      - Jwt__Key=SuperSecretKey_ChangeThis_1234567890_ExtraSecure
+      - Jwt__Issuer=KriptoBorsa
+      - Jwt__Audience=KriptoBorsaClient
+      - Jwt__ExpiresMinutes=120
+    ports:
+      - "5126:5126"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kripto_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5126/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kripto_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - kripto_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  kripto_network:
+    driver: bridge

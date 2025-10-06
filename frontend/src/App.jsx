@@ -16,6 +16,7 @@ function AppContent() {
   const { user, logout } = useAuth();
 
   return (
+    
     <div className="d-flex flex-column justify-content-center align-items-center min-vh-100" style={{ background: '#f8f9fa' }}>
       <nav className="mb-4 text-center">
         <a className="btn btn-link text-primary" href="/">Ana Sayfa</a>

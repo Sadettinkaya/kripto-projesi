@@ -1,0 +1,67 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: kripto_postgres_dev
+    environment:
+      POSTGRES_DB: kripto_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 48
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - kripto_network_dev
+
+  # .NET Core API Backend
+  backend:
+    build:
+      context: ./Kripto.Api
+      dockerfile: Dockerfile
+    container_name: kripto_backend_dev
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5126
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=kripto_db;Username=postgres;Password=48
+      - Jwt__Key=SuperSecretKey_ChangeThis_1234567890_ExtraSecure
+      - Jwt__Issuer=KriptoBorsa
+      - Jwt__Audience=KriptoBorsaClient
+      - Jwt__ExpiresMinutes=120
+    ports:
+      - "5126:5126"
+    depends_on:
+      - postgres
+    networks:
+      - kripto_network_dev
+    volumes:
+      - ./Kripto.Api:/src
+      - /src/bin
+      - /src/obj
+
+  # React Frontend (Development)
+  frontend:
+    image: node:18-alpine
+    container_name: kripto_frontend_dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - VITE_API_URL=http://localhost:5126
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - kripto_network_dev
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data_dev:
+    driver: local
+
+networks:
+  kripto_network_dev:
+    driver: bridge
